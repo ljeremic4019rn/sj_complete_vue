@@ -1,17 +1,12 @@
 const express = require('express');
 const { sequelize, Book } = require('./models');
-
-// const userapi = require('./routes/userApi');//ovde se impl router iz endPoints ubacuje
-// const facultyapi = require('./routes/facultyApi');
-// const libraryapi = require('./routes/libraryApi');
-// const bookapi = require('./routes/bookApi');
-
 const path = require('path');
 const { raw } = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require("socket.io");
+const history = require('connect-history-api-fallback');
 require('dotenv').config();
 const Joi = require('joi');
 
@@ -21,18 +16,12 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: 'http://127.0.0.1:8080',
+        origin: '*',
         methods: ['GET', 'POST', 'PUT'],
         credentials: true
     },
     allowEIO3: true
 });
-
-
-// app.use('/admin/user', userapi);
-// app.use('/admin/faculty', facultyapi);
-// app.use('/admin/library', libraryapi);
-// app.use('/admin/book', bookapi);
 
 function getCookies(req) {
     if (req.headers.cookie == null) return {};
@@ -65,24 +54,7 @@ function authToken(req, res, next) {//ovo je middleware koji proverava da li je 
         next(); 
     });
 }
- 
-// app.get('/register', (req, res) => { //ovo odkomentarises ako hoces da radi na stari nacin
-//     res.sendFile('register.html', { root: './static' });
-// });
 
-// app.get('/login', (req, res) => {
-//     res.sendFile('login.html', { root: './static' });
-// });
-
-
-
-// app.get('/', /*authToken, */(req, res) => {//ovde smo middleware stavili jer stitimo tu putanju, ako nismo logovani preusmerava nas iznad na /login
-//     res.sendFile('index.html', { root: './static' });
-// });
-
-// app.get('/', authToken, (req, res) => {//ovde smo middleware stavili jer stitimo tu putanju, ako nismo logovani preusmerava nas iznad na /login
-//     res.sendFile('index.html', { root: './static' });
-// });
 
 function authSocket(msg, next) {
     if (msg[1].token == null) {
@@ -102,49 +74,6 @@ function authSocket(msg, next) {
 io.on('connection', socket => {
     socket.use(authSocket);
  
-    {   
-    // socket.on('addbook', msg => {
-    //     const schema = Joi.object().keys({
-    //         name: Joi.string().trim().min(4).max(15).required(),
-    //         writer: Joi.string().trim().min(4).max(15).required(),
-    //         genre: Joi.string().trim().min(4).max(15).required(),
-    //         desciption: Joi.string().trim().required(),
-    //         relesedate: Joi.string().trim().required(),
-    //         publisher: Joi.string().trim().min(4).max(15).required(),
-    //         libraryId: Joi.string().trim().required(),
-    //         userId: Joi.string().trim().required()
-    //     });
-    //     // console.log(schema.validate(msg.body));
-
-
-    //      const Validation = schema.validate(msg.body);
-
-    //     //  console.log(Validation);
-
-    //     if(Validation.error){
-    //         res.status(500).json({ msg: Validation.error.message })
-    //     }
-    //     else{
-    //         Book.create({ 
-    //             name: msg.body.name,
-    //             writer: msg.body.writer,
-    //             genre: msg.body.genre,
-    //             desciption: msg.body.desciption,
-    //             relesedate: msg.body.relesedate,
-    //             publisher: msg.body.publisher,
-    //             libraryId: msg.body.libraryId,
-    //             userId: msg.body.userId
-    //         })
-    //         // .then( rows => res.json(rows) )
-    //         // .catch( err => res.status(500).json(err) );
-    //         .then( rows => {
-    //             Book.findOne({ where: { id: rows.id }})
-    //                 .then(msg => io.emit('addbook', JSON.stringify(msg)) ) 
-    //         }).catch( err => res.status(500).json(err) );
-    //     }
-
-    // });
-    }
     socket.on('updateBook', msg => {
         const schema = Joi.object().keys({
             id: Joi.string(),
@@ -189,16 +118,13 @@ io.on('connection', socket => {
         }
     });
 
-
-
     socket.on('error', err => socket.emit('error', err.message) );
 });
 
-
-
-
-
-app.use(express.static(path.join(__dirname, 'static')));
+const staticMdl = express.static(path.join(__dirname, 'dist'));
+app.use(staticMdl);
+app.use(history({ index: '/index.html' }));
+app.use(staticMdl);
 
 server.listen({ port: 8000 }, async () => {
     await sequelize.authenticate();

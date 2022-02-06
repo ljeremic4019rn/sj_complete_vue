@@ -1,6 +1,5 @@
 const express = require('express');
 const { sequelize, User } = require('./models');
-
 const bcrypt = require('bcrypt');//za sifru
 const jwt = require('jsonwebtoken');
 const cors = require('cors');//da dozvolimo sa druge adrese da pristupamo rutama
@@ -10,7 +9,7 @@ require('dotenv').config();//prosledi objekat koji ima cnofig metodu, ne treba n
 const app = express();
 
 var corsOptions = {//sta odakle sme
-    origin: 'http://127.0.0.1:8080',
+    origin: '*',
     optionsSuccessStatus: 200
 }
 
@@ -19,19 +18,8 @@ app.use(express.json());
 app.use(cors(corsOptions));
 
 
-app.post('/register', (req, res) => {
-/*
-    "name": "ime",
-    "lastname": "prezime",
-    "birthday": "03/25/2015",
-    "email": "ime@gmail.com",
-    "username": "uniqueUsername",
-    "password": "password",
-    "admin": true,
-    "moderator": false,
-    "student": false,
-    "facultyId": 69
-*/
+app.post('/api_register', (req, res) => {
+
     const schema = Joi.object().keys({
         name: Joi.string().min(4).max(15).required(),
         lastname: Joi.string().min(4).max(15).required(),
@@ -76,7 +64,7 @@ app.post('/register', (req, res) => {
     }
 });
 
-app.post('/login', (req, res) => {
+app.post('/api_login', (req, res) => {
 
     const schema = Joi.object().keys({
         username: Joi.string().trim().required(),
